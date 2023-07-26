@@ -32,7 +32,7 @@ train_file_paths, val_file_paths = train_test_split(file_paths, test_size=0.2, r
 
 num_classes = len(family_names)
 
-def data_generator(file_paths, batch_size=64):
+def data_generator(file_paths, batch_size=32):
     while True:
         batch_paths = np.random.choice(file_paths, size=batch_size, replace=False)
         batch_data = []
@@ -41,7 +41,7 @@ def data_generator(file_paths, batch_size=64):
         for path in batch_paths:
             with open(path, 'r') as f:
                 json_data = json.load(f)
-            sequence = [int(x, 16) / 255.0 for x in json_data[:2048]]  # Scale hex values to [0, 1]
+            sequence = [int(x, 16) / 255.0 for x in json_data[:1536]]  # Scale hex values to [0, 1]
             batch_data.append(sequence)
             # Extract the family name from the folder name
             family_name = os.path.basename(os.path.dirname(path))
@@ -56,8 +56,8 @@ def data_generator(file_paths, batch_size=64):
 # Step 4: Sequence-to-Sequence Model
 
 model = Sequential()
-model.add(LSTM(128, input_shape=(2048, 1), dropout=0.2, recurrent_dropout=0.2))  # Adding dropout to LSTM layer
-model.add(Dense(256, activation='tanh'))  
+model.add(LSTM(512, input_shape=(1536, 1), recurrent_dropout=0.2))  # Adding dropout to LSTM layer
+model.add(Dense(128, activation='tanh'))  
 model.add(Dense(num_classes, activation='softmax'))  # Output layer for classification
 
 opt = tf.keras.optimizers.Adam(learning_rate=0.0001)
@@ -66,7 +66,7 @@ model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy
 
 # Step 5: Model Training
 
-batch_size = 64
+batch_size = 32
 train_generator = data_generator(train_file_paths, batch_size=batch_size)
 val_generator = data_generator(val_file_paths, batch_size=batch_size)
 

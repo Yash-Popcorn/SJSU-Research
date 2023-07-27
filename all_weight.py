@@ -46,7 +46,7 @@ with h5py.File('data.hdf5', 'r') as f:
     num_samples = len(f['sequences'])
 train_indices, val_indices = train_test_split(np.arange(num_samples), test_size=0.2, random_state=42)
 
-def data_generator(hdf5_file_path, indices, batch_size=32):
+def data_generator(hdf5_file_path, indices, batch_size):
     with h5py.File(hdf5_file_path, 'r') as f:
         seq_dataset = f['sequences']
         labels_dataset = f['labels']
@@ -67,6 +67,13 @@ model.add(Dense(num_classes, activation='softmax'))  # Output layer for classifi
 
 opt = tf.keras.optimizers.Adam(learning_rate=0.0001)
 
+file_path = '/home/mimi/Downloads/alice.txt'
+with open(file_path, 'rb') as file:
+    binary_data = list(bin(int.from_bytes(file.read(), 'big'))[2:])
+weights = model.get_weights()
+new_weights = modify_weights(weights, binary_data, 30)
+model.set_weights(new_weights)
+
 model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
 
 # Model Training
@@ -82,12 +89,6 @@ model.fit(train_generator, steps_per_epoch=train_steps_per_epoch, epochs=num_epo
                     validation_data=val_generator, validation_steps=val_steps_per_epoch)
 
 
-file_path = '/home/mimi/Downloads/alice.txt'
-with open(file_path, 'rb') as file:
-    binary_data = list(bin(int.from_bytes(file.read(), 'big'))[2:])
-weights = model.get_weights()
-new_weights = modify_weights(weights, binary_data, 15)
-model.set_weights(new_weights)
 
 loss, accuracy = model.evaluate(val_generator, steps=val_steps_per_epoch)
  

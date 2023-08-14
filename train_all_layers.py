@@ -95,10 +95,12 @@ loss, accuracy = model.evaluate(val_generator, steps=val_steps_per_epoch)
 print("Test Loss:", loss)
 print("Test Accuracy:", accuracy)
 
+
 # val_generator.reset()  # Reset the generator to start from the beginning
 predictions = model.predict(val_generator, steps=val_steps_per_epoch, verbose=1)
 predicted_classes = np.argmax(predictions, axis=1)
 
+model.summary()
 # Get true classes for validation data
 true_classes = []
 for _ in range(val_steps_per_epoch):
@@ -106,20 +108,40 @@ for _ in range(val_steps_per_epoch):
     true_classes.extend(np.argmax(batch_labels, axis=1))
 
 # Create the confusion matrix
-confusion_mtx = confusion_matrix(true_classes, predicted_classes)
 
-# Display the confusion matrix as a heatmap
-plt.figure(figsize=(8, 6))
-plt.imshow(confusion_mtx, interpolation='nearest', cmap=plt.cm.Blues)
-plt.title('Confusion Matrix')
-plt.colorbar()
-tick_marks = np.arange(num_classes)
-plt.xticks(tick_marks, range(num_classes))
-plt.yticks(tick_marks, range(num_classes))
-plt.xlabel('Predicted')
-plt.ylabel('True')
+confusion_mtx = confusion_matrix(true_classes, predicted_classes)
+cm_normalized = confusion_mtx.astype('float') / confusion_mtx.sum(axis=1)[:, np.newaxis]
+
+
+class_labels = ['adload', 'BHO', 'ceeinject', 'onlinegames', 'renos', 'startpage', 'vb', 'vbinject', 'vobfus', 'winwebsec']
+
+fig, ax = plt.subplots(figsize=(10, 10))
+im = ax.imshow(cm_normalized, cmap='Blues')
+
+cbar = ax.figure.colorbar(im, ax=ax)
+
+ax.set_xticks(np.arange(len(class_labels)))
+ax.set_yticks(np.arange(len(class_labels)))
+ax.set_xticklabels(class_labels)
+ax.set_yticklabels(class_labels)
+
+plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+         rotation_mode="anchor")
+
+for i in range(len(class_labels)):
+    for j in range(len(class_labels)):
+        text = ax.text(j, i, f"{cm_normalized[i, j]:.2%}",
+        # text = ax.text(j, i, f"{cm[i, j]}",
+                       ha="center", va="center", color="black")
+
+ax.set_title("Confusion Matrix")
+ax.set_xlabel("Predicted Label")
+ax.set_ylabel("True Label")
+
 plt.show()
 
 # Print classification report
 target_names = [f'Class {i}' for i in range(num_classes)]
 print(classification_report(true_classes, predicted_classes, target_names=target_names))
+
+

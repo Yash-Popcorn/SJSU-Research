@@ -21,7 +21,6 @@ family_to_class = {family_name: idx for idx, family_name in enumerate(family_nam
 num_classes = 10
 
 def modify_weights_all_layers(weights, binary_data, num_bits_per_weight):
-    def modify_weights(weights, binary_data, num_bits_per_weight):
     binary_data_gen = (bit for bit in binary_data)
     bit_counter = 0
 

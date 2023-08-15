@@ -20,6 +20,33 @@ family_to_class = {family_name: idx for idx, family_name in enumerate(family_nam
 
 num_classes = 10
 
+def modify_weights_all_layers(weights, binary_data, num_bits_per_weight):
+    def modify_weights(weights, binary_data, num_bits_per_weight):
+    binary_data_gen = (bit for bit in binary_data)
+    bit_counter = 0
+
+    for i in range(len(weights)):
+      for j in range(len(weights[i])):
+          flat_weight = weights[i][j].flatten()
+
+          for k in range(len(flat_weight)):
+              try:
+                  bits = [next(binary_data_gen) for _ in range(num_bits_per_weight)]
+              except StopIteration:
+                  break
+
+              binary_weight = struct.unpack('!I', struct.pack('!f', flat_weight[k]))[0]
+
+              for bit_idx, bit in enumerate(bits):
+                  binary_weight = (binary_weight & ~(1 << bit_idx)) | (int(bit) << bit_idx)
+                  bit_counter += 1
+
+              flat_weight[k] = struct.unpack('!f', struct.pack('!I', binary_weight))[0]
+
+          weights[i][j] = flat_weight.reshape(weights[i][j].shape)
+
+    return weights
+    
 # Convert JSON to HDF5
 def convert_json_to_hdf5(data_folder, hdf5_file_path):
     file_paths = []
